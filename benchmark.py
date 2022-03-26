@@ -22,7 +22,7 @@ def loadProcesses():
 
 
 # ----------------------------------------------------------------------------
-#    benchmarkFIFO - measures turnaround and wait times for First-In-First-Out(FIFO) scheduling in cpu cycles.
+#    benchmarkAlgorthm - measures turnaround and wait times for custom priority scheduling algorthm in nanoseconds.
 #                    print average value to the screen when complete
 #
 #
@@ -30,56 +30,14 @@ def loadProcesses():
 # ----------------------------------------------------------------------------
 
 
-def benchmarkFIFO(scheduler):
+def benchmarkAlgorithm(scheduler):
     count = k
 
     turnaroundTimeSum = 0
     waitTimeSum = 0
 
     while count > 0:
-        endedProcess = scheduler.detactProcess()
-        if endedProcess == None:
-            break
-
-        turnaroundTime = endedProcess.completion_time - endedProcess.arrival_time
-        waitTime = turnaroundTime - endedProcess.burst_time
-
-        endedProcess.clock_time = endedProcess.burst_time
-        turnaroundTimeSum = turnaroundTimeSum + turnaroundTime
-        waitTimeSum = waitTimeSum + waitTime
-
-        count = count - 1
-
-    print("----------------------Benchmarking FIFO-----------------------------\n")
-    print(
-        "Average turnaround: "
-        + "{:.2e}".format(turnaroundTimeSum / k)
-        + " (%d cycles)\n" % (turnaroundTimeSum / k)
-    )
-    print(
-        "Average wait time: "
-        + "{:.2e}".format(waitTimeSum / k)
-        + " (%d cycles) \n\n" % (waitTimeSum / k)
-    )
-
-
-# ----------------------------------------------------------------------------
-#    benchmarkSJR - measures turnaround and wait times for Shortest job first(SJR) scheduling in CPU cycles.
-#                    print average value to the screen when complete
-#
-#
-#    @returns - scheduler : Scheduler         -Scheduler to simulate scheduling method
-# ----------------------------------------------------------------------------
-
-
-def benchmarkSJR(scheduler):
-    count = k
-
-    turnaroundTimeSum = 0
-    waitTimeSum = 0
-
-    while count > 0:
-        endedProcess = scheduler.detactProcess()
+        endedProcess = scheduler.detachProcess()
         if endedProcess == None:
             break
 
@@ -91,62 +49,13 @@ def benchmarkSJR(scheduler):
 
         count = count - 1
 
-    print("----------------------Benchmarking SJR-----------------------------\n")
-    print(
-        "Average turnaround: "
-        + "{:.2e}".format(turnaroundTimeSum / k)
-        + " (%d cycles)\n" % (turnaroundTimeSum / k)
-    )
-    print(
-        "Average wait time: "
-        + "{:.2e}".format(waitTimeSum / k)
-        + " (%d cycles)\n\n" % (waitTimeSum / k)
-    )
-
-
-# ----------------------------------------------------------------------------
-#    benchmarkRR - measures turnaround and wait times for Round Robin(RR) scheduling in CPU cycles.
-#                  prints average value to the screen when complete
-#
-#
-#    @returns - scheduler : Scheduler         -Scheduler to simulate scheduling method
-# ----------------------------------------------------------------------------
-
-
-def benchmarkRR(scheduler):
-    count = 0
-
-    turnaroundTimeSum = 0
-    waitTimeSum = 0
-
-    while True:
-        endedProcess = scheduler.detactProcess()
-        if endedProcess == None:
-            break
-        turnaroundTime = endedProcess.completion_time - endedProcess.arrival_time
-        waitTime = turnaroundTime - endedProcess.burst_time
-
-        turnaroundTimeSum = turnaroundTimeSum + turnaroundTime
-        waitTimeSum = waitTimeSum + waitTime
-
-        count = count + 1
-
-    print("----------------------Benchmarking RR-----------------------------\n")
-    print(
-        "Average turnaround: "
-        + "{:.2e}".format(turnaroundTimeSum / count)
-        + " (%d cycles)\n" % (turnaroundTimeSum / count)
-    )
-    print(
-        "Average wait time: "
-        + "{:.2e}".format(waitTimeSum / count)
-        + " (%d cycles)\n\n" % (waitTimeSum / count)
-    )
+    print("----------------------Benchmarking Algorithm-----------------------------\n")
+    print("Average turnaround: %f nanoseconds\n" % ((turnaroundTimeSum / k) * 1e9))
 
 
 # ----------------------------------------------------------------------------
 #    sortProcesses - variation of QuickSort thats sorts processes by burst time. Used
-#                    to sort processes for SJR scheduling
+#                    to sort processes before being scheduled
 #
 #
 #    @returns - scheduler : Scheduler         -Scheduler to simulate scheduling method

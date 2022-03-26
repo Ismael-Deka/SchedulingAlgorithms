@@ -38,7 +38,9 @@ class Process:
 #    Processor - dataclass stucture representing one of the system's processors
 #
 #
-#    @fields:   current_process : Process - Process currently occupying processor. It
+#    @fields:   clock_speed: int          - Clock speed of the processor in hertz
+#
+#               current_process : Process - Process currently occupying processor. It
 #                                          defaults to "None"(null) when processor is vacant.
 #
 # -----------------------------------\/\/\/--------------------------------------
@@ -46,6 +48,7 @@ class Process:
 
 @dataclass
 class Processor:
+    clock_speed: int
     current_process: Process
 
 
@@ -92,12 +95,12 @@ class Scheduler:
     def __init__(self, process_interval=0, processes=[]):
         self.clock = 0
         self.process_queue = []
-        self.Pa = Processor(None)
-        self.Pb = Processor(None)
-        self.Pc = Processor(None)
-        self.Pd = Processor(None)
-        self.Pe = Processor(None)
-        self.Pf = Processor(None)
+        self.Pa = Processor(2e9, None)
+        self.Pb = Processor(2e9, None)
+        self.Pc = Processor(2e9, None)
+        self.Pd = Processor(4e9, None)
+        self.Pe = Processor(4e9, None)
+        self.Pf = Processor(4e9, None)
         self.process_interval = process_interval
         self.loadProcesses(processes)
 
@@ -105,7 +108,7 @@ class Scheduler:
     #    loadProcesses - function that loads unexecuted processes into processors/process queue
     #
     #
-    #    @fields:       processes : list        - list of processes to load into available
+    #    @params:       processes : list        - list of processes to load into available
     #                                             processors and process queue.
     #
     # ----------------------------------------------------------------------------
@@ -125,11 +128,11 @@ class Scheduler:
     #
     # ----------------------------------------------------------------------------
 
-    def getNextProcessorToDetach(self):
+    def getNextProcessorToComplete(self, isReattaching):
         processorToDetach = None
         shortestRuntime = (
-            10e12 + 1
-        )  ##Defaults to value larger than maximum possible burst time(10*10^12)
+            10e12 + 1 / 2e9
+        )  ##Defaults to value larger than maximum possible burst time(10*10^12) divided by the clock speed of the slowest processor
 
         if self.Pa.current_process != None:
             if self.Pa.current_process.execution_time < shortestRuntime:
@@ -147,41 +150,26 @@ class Scheduler:
                 shortestRuntime = self.Pc.current_process.execution_time
                 processorToDetach = self.Pc
 
-        if self.Pd.current_process != None:
-            if self.Pd.current_process.execution_time < shortestRuntime:
+        if (
+            isReattaching == False
+        ):  ## Only check 4ghz processors when your not try to reattach to another 4ghz
+            if self.Pd.current_process != None:
+                if self.Pd.current_process.execution_time < shortestRuntime:
 
-                shortestRuntime = self.Pd.current_process.execution_time
-                processorToDetach = self.Pd
+                    shortestRuntime = self.Pd.current_process.execution_time
+                    processorToDetach = self.Pd
 
-        if self.Pe.current_process != None:
-            if self.Pe.current_process.execution_time < shortestRuntime:
-                shortestRuntime = self.Pe.current_process.execution_time
-                processorToDetach = self.Pe
+            if self.Pe.current_process != None:
+                if self.Pe.current_process.execution_time < shortestRuntime:
+                    shortestRuntime = self.Pe.current_process.execution_time
+                    processorToDetach = self.Pe
 
-        if self.Pf.current_process != None:
-            if self.Pf.current_process.execution_time < shortestRuntime:
-                shortestRuntime = self.Pf.current_process.execution_time
-                processorToDetach = self.Pf
+            if self.Pf.current_process != None:
+                if self.Pf.current_process.execution_time < shortestRuntime:
+                    shortestRuntime = self.Pf.current_process.execution_time
+                    processorToDetach = self.Pf
 
         return processorToDetach
-
-    # ----------------------------------------------------------------------------
-    #    getProcessBurstTime - helper function that returns the burst time of a process
-    #
-    #
-    #    @params:      process : Process         - an active process on the system
-    #
-    #    @returns:     burst_time : int          - burst time of given process. returns
-    #                                              (10e12 + 1) which is the maximum possible
-    #                                              burst time (10*10^12) plus one.
-    #
-    # ----------------------------------------------------------------------------
-
-    def getProcessBurstTime(self, process):
-        if process != None:
-            return process.burst_time
-        else:
-            return 10e12 + 1
 
     # ----------------------------------------------------------------------------
     #    updateClock - function that updates the clock and exeuction time of all active processes
@@ -191,23 +179,24 @@ class Scheduler:
     #
     #
     #    @params:      process : Process         - process that's going to be detached
+    #                  clock_speed:int           - clock speed of the detaching process
     #
     # ----------------------------------------------------------------------------
-    def updateClock(self, process):
+    def updateClock(self, process, clock_speed):
         if self.process_interval == 0:
-            self.clock = self.clock + process.execution_time
+            self.clock = self.clock + (process.execution_time / clock_speed)
             if self.Pa.current_process != None:
-                self.updateProcessExecutionTimes(self.Pa, process)
+                self.updateProcessExecutionTimes(self.Pa, process, clock_speed)
             if self.Pb.current_process != None:
-                self.updateProcessExecutionTimes(self.Pb, process)
+                self.updateProcessExecutionTimes(self.Pb, process, clock_speed)
             if self.Pc.current_process != None:
-                self.updateProcessExecutionTimes(self.Pc, process)
+                self.updateProcessExecutionTimes(self.Pc, process, clock_speed)
             if self.Pd.current_process != None:
-                self.updateProcessExecutionTimes(self.Pd, process)
+                self.updateProcessExecutionTimes(self.Pd, process, clock_speed)
             if self.Pe.current_process != None:
-                self.updateProcessExecutionTimes(self.Pe, process)
+                self.updateProcessExecutionTimes(self.Pe, process, clock_speed)
             if self.Pf.current_process != None:
-                self.updateProcessExecutionTimes(self.Pf, process)
+                self.updateProcessExecutionTimes(self.Pf, process, clock_speed)
         else:
             self.clock = self.clock + self.process_interval
 
@@ -226,19 +215,47 @@ class Scheduler:
     #
     #                                 process : Process         - process that's going to be detached
     #
+    #                                 closing_clock_speed:int   - clock speed of closing process
+    #
     # ----------------------------------------------------------------------------
 
-    def updateProcessExecutionTimes(self, processor, process):
-
-        if processor.current_process.execution_time > process.execution_time:
-            processor.current_process.execution_time = (
-                processor.current_process.execution_time - process.execution_time
-            )
+    def updateProcessExecutionTimes(
+        self, processor, closing_process, closing_clock_speed
+    ):
+        if processor.clock_speed == closing_clock_speed:
+            if (
+                processor.current_process.execution_time
+                > closing_process.execution_time
+            ):
+                processor.current_process.execution_time = (
+                    processor.current_process.execution_time
+                    - closing_process.execution_time
+                )
+            else:
+                processor.current_process.execution_time = 0
+        elif closing_clock_speed > processor.clock_speed:
+            if processor.current_process.execution_time > (
+                closing_process.execution_time / 2
+            ):
+                processor.current_process.execution_time = (
+                    processor.current_process.execution_time
+                    - (closing_process.execution_time / 2)
+                )
+            else:
+                processor.current_process.execution_time = 0
         else:
-            processor.current_process.execution_time = 0
+            if processor.current_process.execution_time > (
+                closing_process.execution_time * 2
+            ):
+                processor.current_process.execution_time = (
+                    processor.current_process.execution_time
+                    - (closing_process.execution_time * 2)
+                )
+            else:
+                processor.current_process.execution_time = 0
 
     # ----------------------------------------------------------------------------
-    #    detactProcess - function that will detact a process from one of the processors on the system.
+    #    detachProcess - function that will detact a process from one of the processors on the system.
     #                    Once detacted, the next process in the process queue is attached to the next availible processor.
     #                    If there is a process interval greater than zero and the burst time is greater than the interval,
     #                    than the ending process is pushed back to the end of the process queue.
@@ -249,20 +266,31 @@ class Scheduler:
     #
     # ----------------------------------------------------------------------------
 
-    def detactProcess(self):
-        processor = self.getNextProcessorToDetach()
+    def detachProcess(self):
+        processor = self.getNextProcessorToComplete(False)
         if processor == None:
             return None
-        self.updateClock(processor.current_process)
+        self.updateClock(processor.current_process, processor.clock_speed)
 
         endingProcess = processor.current_process
 
         endingProcess.completion_time = self.clock
 
-        processor.current_process = None
-
+        processor.current_process = None  ## Once detach find the shortest remaining execution time from one on the processor or queue if 4ghz
         if self.process_queue:
-            self.attachProcess(self.process_queue.pop(0))
+            if processor.clock_speed == 4e9:
+                nextProcessorToComplete = self.getNextProcessorToComplete(True)
+                if (
+                    self.process_queue[0].execution_time / 2e9
+                    <= nextProcessorToComplete.current_process.execution_time
+                ):
+                    self.attachProcessFromQueue(processor)
+
+                else:
+                    self.attachProcessFromProcessor(processor, nextProcessorToComplete)
+
+            else:
+                self.attachProcess(self.process_queue.pop(0))
 
         if self.process_interval == 0 or endingProcess.burst_time == 0:
             return endingProcess
@@ -275,6 +303,38 @@ class Scheduler:
                 endingProcess.burst_time = 0
             self.process_queue.append(endingProcess)
             return endingProcess
+
+    # ----------------------------------------------------------------------------
+    #    attachProcessFromQueue - helper function that will attach a process from the
+    #                             front of the process queue to a particular processor
+    #
+    #
+    #    @params:       processor : Processor   - processor the new process will attach to
+    #
+    # ----------------------------------------------------------------------------
+
+    def attachProcessFromQueue(self, processor):
+        newProcess = self.process_queue.pop(0)
+        newProcess.execution_time = newProcess.execution_time / 4e9
+        newProcess.arrival_time = self.clock
+        processor.current_process = newProcess
+
+    # ----------------------------------------------------------------------------
+    #    attachProcessFromProcessor - helper function that will attach a process from one
+    #                                 processor to another.
+    #
+    #
+    #    @params:       processor : Processor             - processor the process will attach to
+    #
+    #                   nextProcessorToComplete:Processor - processor the process will dettach from
+    #
+    # ----------------------------------------------------------------------------
+    def attachProcessFromProcessor(self, processor, nextProcessorToComplete):
+        newProcess = nextProcessorToComplete.current_process
+        newProcess.execution_time = (newProcess.execution_time * 2e9) / 4e9
+        nextProcessorToComplete.current_process = None
+        processor.current_process = newProcess
+        self.attachProcess(self.process_queue.pop(0))
 
     # ----------------------------------------------------------------------------
     #    attachProcess - function that will attact a process to the next availible processor. If all
@@ -290,33 +350,40 @@ class Scheduler:
         if self.Pa.current_process == None:
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
+                newProcess.execution_time = (
+                    newProcess.execution_time / 2e9
+                )  ##convert remaining excution time to seconds depending on processor
             self.Pa.current_process = newProcess
 
         elif self.Pb.current_process == None:
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
+                newProcess.execution_time = newProcess.execution_time / 2e9
             self.Pb.current_process = newProcess
 
         elif self.Pc.current_process == None:
 
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
+                newProcess.execution_time = newProcess.execution_time / 2e9
             self.Pc.current_process = newProcess
 
         elif self.Pd.current_process == None:
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
+                newProcess.execution_time = newProcess.execution_time / 4e9
             self.Pd.current_process = newProcess
 
         elif self.Pe.current_process == None:
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
+                newProcess.execution_time = newProcess.execution_time / 4e9
             self.Pe.current_process = newProcess
 
         elif self.Pf.current_process == None:
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
-
+                newProcess.execution_time = newProcess.execution_time / 4e9
             self.Pf.current_process = newProcess
         else:
             self.process_queue.append(newProcess)
