@@ -30,13 +30,14 @@ def loadProcesses():
 # ----------------------------------------------------------------------------
 
 
-def benchmarkQuestionThreeAlgorithm(scheduler):
+def benchmarkQuestionFourAlgorithm(scheduler):
     count = k
 
     turnaroundTimeSum = 0
     waitTimeSum = 0
 
     while count > 0:
+        scheduler.attachProcess(generateProcess())
         endedProcess = scheduler.detachProcess()
         if endedProcess == None:
             break
@@ -50,7 +51,7 @@ def benchmarkQuestionThreeAlgorithm(scheduler):
         count = count - 1
 
     print(
-        "----------------------Benchmarking Question 3 Algorithm-----------------------------\n"
+        "----------------------Benchmarking Question 4 Algorithm-----------------------------\n"
     )
     print("Average turnaround: %f nanoseconds\n" % ((turnaroundTimeSum / k) * 1e9))
 
