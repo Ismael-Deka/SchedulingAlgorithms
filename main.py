@@ -1,19 +1,31 @@
+import copy
 from scheduler import Scheduler
+from QuestionTwoAlgorithm.scheduler import QuestionTwoScheduler
+from QuestionTwoAlgorithm.benchmark import (
+    loadProcesses,
+    sortProcesses,
+    benchmarkQuestionTwoAlgorithm,
+)
 from benchmark import (
     loadProcesses,
     sortProcesses,
-    benchmarkAlgorithm,
+    benchmarkQuestionThreeAlgorithm,
 )
 
 
 def main():
-    processes = []
+    processesOne = []
 
-    processes = loadProcesses()
+    processesOne = loadProcesses()
 
-    sortProcesses(processes, 0, len(processes) - 1)
+    processesTwo = copy.deepcopy(processesOne)
 
-    benchmarkAlgorithm(Scheduler(0, processes))
+    sortProcesses(processesOne, 0, len(processesOne) - 1)
+    sortProcesses(processesTwo, 0, len(processesTwo) - 1)
+
+    benchmarkQuestionTwoAlgorithm(QuestionTwoScheduler(0, processesOne))
+
+    benchmarkQuestionThreeAlgorithm(Scheduler(0, processesTwo))
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from process_generator import generateProcess
+from QuestionTwoAlgorithm.process_generator import generateProcess
 
 
 k = 250  ## total number of processes on the system
@@ -30,7 +30,7 @@ def loadProcesses():
 # ----------------------------------------------------------------------------
 
 
-def benchmarkQuestionThreeAlgorithm(scheduler):
+def benchmarkQuestionTwoAlgorithm(scheduler):
     count = k
 
     turnaroundTimeSum = 0
@@ -50,7 +50,7 @@ def benchmarkQuestionThreeAlgorithm(scheduler):
         count = count - 1
 
     print(
-        "----------------------Benchmarking Question 3 Algorithm-----------------------------\n"
+        "----------------------Benchmarking Question 2 Algorithm-----------------------------\n"
     )
     print("Average turnaround: %f nanoseconds\n" % ((turnaroundTimeSum / k) * 1e9))
 

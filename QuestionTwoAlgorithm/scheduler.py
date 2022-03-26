@@ -49,7 +49,6 @@ class Process:
 @dataclass
 class Processor:
     clock_speed: int
-    memory: int
     current_process: Process
 
 
@@ -72,7 +71,7 @@ class Processor:
 # ---------------------\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/----------------------
 
 
-class Scheduler:
+class QuestionTwoScheduler:
 
     # ----------------------------------------------------------------------------
     #    Default Constructor (__init__)
@@ -96,12 +95,12 @@ class Scheduler:
     def __init__(self, process_interval=0, processes=[]):
         self.clock = 0
         self.process_queue = []
-        self.Pa = Processor(2e9, 8192, None)
-        self.Pb = Processor(2e9, 8192, None)
-        self.Pc = Processor(2e9, 8192, None)
-        self.Pd = Processor(4e9, 16384, None)
-        self.Pe = Processor(4e9, 16384, None)
-        self.Pf = Processor(4e9, 16384, None)
+        self.Pa = Processor(2e9, None)
+        self.Pb = Processor(2e9, None)
+        self.Pc = Processor(2e9, None)
+        self.Pd = Processor(4e9, None)
+        self.Pe = Processor(4e9, None)
+        self.Pf = Processor(4e9, None)
         self.process_interval = process_interval
         self.loadProcesses(processes)
 
@@ -281,19 +280,14 @@ class Scheduler:
         if self.process_queue:
             if processor.clock_speed == 4e9:
                 nextProcessorToComplete = self.getNextProcessorToComplete(True)
-                if nextProcessorToComplete != None:
-                    if (
-                        self.process_queue[0].execution_time / 2e9
-                        <= nextProcessorToComplete.current_process.execution_time
-                    ):
-                        self.attachProcessFromQueue(processor)
+                if (
+                    self.process_queue[0].execution_time / 2e9
+                    <= nextProcessorToComplete.current_process.execution_time
+                ):
+                    self.attachProcessFromQueue(processor)
 
-                    else:
-                        self.attachProcessFromProcessor(
-                            processor, nextProcessorToComplete
-                        )
                 else:
-                    self.attachProcess(self.process_queue.pop(0))
+                    self.attachProcessFromProcessor(processor, nextProcessorToComplete)
 
             else:
                 self.attachProcess(self.process_queue.pop(0))
@@ -320,14 +314,10 @@ class Scheduler:
     # ----------------------------------------------------------------------------
 
     def attachProcessFromQueue(self, processor):
-
         newProcess = self.process_queue.pop(0)
-        if processor.memory <= newProcess.memory_footprint:
-            newProcess.execution_time = newProcess.execution_time / 4e9
-            newProcess.arrival_time = self.clock
-            processor.current_process = newProcess
-        else:
-            self.attachProcess(newProcess)
+        newProcess.execution_time = newProcess.execution_time / 4e9
+        newProcess.arrival_time = self.clock
+        processor.current_process = newProcess
 
     # ----------------------------------------------------------------------------
     #    attachProcessFromProcessor - helper function that will attach a process from one
@@ -341,10 +331,9 @@ class Scheduler:
     # ----------------------------------------------------------------------------
     def attachProcessFromProcessor(self, processor, nextProcessorToComplete):
         newProcess = nextProcessorToComplete.current_process
-        if processor.memory <= newProcess.memory_footprint:
-            newProcess.execution_time = (newProcess.execution_time * 2e9) / 4e9
-            nextProcessorToComplete.current_process = None
-            processor.current_process = newProcess
+        newProcess.execution_time = (newProcess.execution_time * 2e9) / 4e9
+        nextProcessorToComplete.current_process = None
+        processor.current_process = newProcess
         self.attachProcess(self.process_queue.pop(0))
 
     # ----------------------------------------------------------------------------
@@ -358,10 +347,7 @@ class Scheduler:
 
     def attachProcess(self, newProcess):
 
-        if (
-            self.Pa.current_process == None
-            and newProcess.memory_footprint <= self.Pa.memory
-        ):
+        if self.Pa.current_process == None:
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
                 newProcess.execution_time = (
@@ -369,47 +355,32 @@ class Scheduler:
                 )  ##convert remaining excution time to seconds depending on processor
             self.Pa.current_process = newProcess
 
-        elif (
-            self.Pb.current_process == None
-            and newProcess.memory_footprint <= self.Pb.memory
-        ):
+        elif self.Pb.current_process == None:
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
                 newProcess.execution_time = newProcess.execution_time / 2e9
             self.Pb.current_process = newProcess
 
-        elif (
-            self.Pc.current_process == None
-            and newProcess.memory_footprint <= self.Pc.memory
-        ):
+        elif self.Pc.current_process == None:
 
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
                 newProcess.execution_time = newProcess.execution_time / 2e9
             self.Pc.current_process = newProcess
 
-        elif (
-            self.Pd.current_process == None
-            and newProcess.memory_footprint <= self.Pd.memory
-        ):
+        elif self.Pd.current_process == None:
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
                 newProcess.execution_time = newProcess.execution_time / 4e9
             self.Pd.current_process = newProcess
 
-        elif (
-            self.Pe.current_process == None
-            and newProcess.memory_footprint <= self.Pe.memory
-        ):
+        elif self.Pe.current_process == None:
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
                 newProcess.execution_time = newProcess.execution_time / 4e9
             self.Pe.current_process = newProcess
 
-        elif (
-            self.Pf.current_process == None
-            and newProcess.memory_footprint <= self.Pf.memory
-        ):
+        elif self.Pf.current_process == None:
             if newProcess.arrival_time == -1:
                 newProcess.arrival_time = self.clock
                 newProcess.execution_time = newProcess.execution_time / 4e9
